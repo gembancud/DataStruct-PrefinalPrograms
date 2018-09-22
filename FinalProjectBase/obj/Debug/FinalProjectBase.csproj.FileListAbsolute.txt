@@ -1,0 +1,7 @@
+C:\Users\gemba\source\repos\FinalProjectBase\FinalProjectBase\bin\Debug\FinalProjectBase.exe.config
+C:\Users\gemba\source\repos\FinalProjectBase\FinalProjectBase\bin\Debug\FinalProjectBase.exe
+C:\Users\gemba\source\repos\FinalProjectBase\FinalProjectBase\bin\Debug\FinalProjectBase.pdb
+C:\Users\gemba\source\repos\FinalProjectBase\FinalProjectBase\obj\Debug\FinalProjectBase.csprojResolveAssemblyReference.cache
+C:\Users\gemba\source\repos\FinalProjectBase\FinalProjectBase\obj\Debug\FinalProjectBase.csproj.CoreCompileInputs.cache
+C:\Users\gemba\source\repos\FinalProjectBase\FinalProjectBase\obj\Debug\FinalProjectBase.exe
+C:\Users\gemba\source\repos\FinalProjectBase\FinalProjectBase\obj\Debug\FinalProjectBase.pdb
