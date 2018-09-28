@@ -31,6 +31,12 @@ namespace FinalProjectBase
         public void AddNeighbor(Vertex<T> fromVertex, Vertex<T> toVertex, double weight) => Vertices[fromVertex.ID].AddNeighbor(toVertex, weight);
         public void AddNeighbor(int fromVertexID, int toVertexID, double weight) => Vertices[fromVertexID].AddNeighbor(Vertices[toVertexID], weight);
 
+        public void AddUndirectedNeighbor(int fromVertexID, int toVertexID, double weight)
+        {
+            Vertices[fromVertexID].AddNeighbor(Vertices[toVertexID],weight);
+            Vertices[toVertexID].AddNeighbor(Vertices[fromVertexID],weight);
+        }
+
         public Route<T> CalculateShortestRoutes(int fromVertexID)
         {
             bool[] visitedVerticesCheck = new bool[Vertices.Count];
@@ -71,6 +77,39 @@ namespace FinalProjectBase
                 }
             }
             return resultantRoute;
+        }
+
+        public Route<T> LowestCostRoute()
+        {
+            var shortestRoute = CalculateShortestRoutes(0);
+            foreach (var vertex in Vertices)
+            {
+                var tmp = CalculateShortestRoutes(vertex.ID);
+                if (shortestRoute.TotalDisplacement > tmp.TotalDisplacement) shortestRoute = tmp;
+            }
+            return shortestRoute;
+        }
+
+        public IList<Route<T>> AllConnectedRoutes()
+        {
+            IList<Route<T>> result = new List<Route<T>>();
+            foreach (Vertex<T> vertex in Vertices)
+            {
+                var route = CalculateShortestRoutes(vertex.ID);
+                if(route.TotalDisplacement != double.MaxValue) result.Add(route);
+            }
+            return result;
+        }
+
+        public IList<Route<T>> AllConnectedUnweightedRoutes()
+        {
+            IList<Route<T>> result = new List<Route<T>>();
+            foreach (Vertex<T> vertex in Vertices)
+            {
+                var route = DepthFirstSearch(vertex.ID);
+                if (route.TotalDisplacement == 0) result.Add(route);
+            }
+            return result;
         }
 
         public Route<T> DepthFirstSearch(int fromVertexID)

@@ -8,6 +8,20 @@ namespace FinalProjectBase
         public IList<Vertex<T>> PredecessorList { get; set; }
         public IList<double> DisplacementList { get; set; }
 
+        public double TotalDisplacement
+        {
+            get
+            {
+                double total = 0;
+                foreach (double displacement in DisplacementList)
+                {
+                    total += displacement;
+                }
+
+                return total;
+            }
+        }
+
         public Route(int count)
         {
             PredecessorList = new Vertex<T>[count];
