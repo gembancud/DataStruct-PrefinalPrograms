@@ -1,0 +1,7 @@
+C:\Users\gemba\source\repos\FinalProjectBase\DataStruct-PrefinalPrograms\MergeSortBase\bin\Debug\MergeSortBase.exe.config
+C:\Users\gemba\source\repos\FinalProjectBase\DataStruct-PrefinalPrograms\MergeSortBase\bin\Debug\MergeSortBase.exe
+C:\Users\gemba\source\repos\FinalProjectBase\DataStruct-PrefinalPrograms\MergeSortBase\bin\Debug\MergeSortBase.pdb
+C:\Users\gemba\source\repos\FinalProjectBase\DataStruct-PrefinalPrograms\MergeSortBase\obj\Debug\MergeSortBase.csprojResolveAssemblyReference.cache
+C:\Users\gemba\source\repos\FinalProjectBase\DataStruct-PrefinalPrograms\MergeSortBase\obj\Debug\MergeSortBase.csproj.CoreCompileInputs.cache
+C:\Users\gemba\source\repos\FinalProjectBase\DataStruct-PrefinalPrograms\MergeSortBase\obj\Debug\MergeSortBase.exe
+C:\Users\gemba\source\repos\FinalProjectBase\DataStruct-PrefinalPrograms\MergeSortBase\obj\Debug\MergeSortBase.pdb
