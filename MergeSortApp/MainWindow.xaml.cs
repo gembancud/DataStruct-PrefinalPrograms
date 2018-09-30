@@ -29,7 +29,7 @@ namespace MergeSortApp
         public MainWindow()
         {
             InitializeComponent();
-            sample = new List<string>() { "Farah", "Ben", "Alex", "Cathy", "Echo", "Dingdong", "Farah" };
+            sample = new List<string>() { "Farah", "Ben", "Alex", "Cathy", "Echo", "Dingdong", "Amanda" };
             Array.ItemsSource = sample;
         }
 
@@ -43,7 +43,11 @@ namespace MergeSortApp
 
         private void SortArrayClick(object sender, RoutedEventArgs e)
         {
+            FlipView.Items.Clear();
+            
             Result = MergeSort<string>.Do(sample.ToArray());
+            sample = Result.ToList();
+            Array.ItemsSource = sample;
             History = MergeSort<string>.History;
             var x = CreateFlipViews();
             foreach (FlipViewItem flipViewItem in x)
@@ -51,8 +55,10 @@ namespace MergeSortApp
                 FlipView.Items.Add(flipViewItem);
             }
 
+            FlipView.SelectedIndex = 0;
 
             yourMahAppFlyout.IsOpen = false;
+            
         }
 
         private void DeleteItemClick(object sender, RoutedEventArgs e)

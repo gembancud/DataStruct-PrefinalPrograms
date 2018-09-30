@@ -25,7 +25,9 @@ namespace MergeSortBase
                 return input;
             }
 
-            int pivot = input.Length / 2;
+            double numerator = input.Length;
+            double prepivot = numerator / 2 ;
+            int pivot = (int)Math.Ceiling(prepivot);
             T[] left = new T[pivot];
             T[] right = new T[input.Length - pivot];
             Array.Copy(input, 0, left, 0, pivot);
