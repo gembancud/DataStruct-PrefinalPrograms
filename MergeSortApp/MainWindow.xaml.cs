@@ -44,11 +44,51 @@ namespace MergeSortApp
         private void SortArrayClick(object sender, RoutedEventArgs e)
         {
             FlipView.Items.Clear();
-            
-            Result = MergeSort<string>.Do(sample.ToArray());
+            int i = 0;
+
+            //Checks if all members are numbers
+            bool allAreNumber = true;
+            for (int j = 0; j < sample.Count; j++)
+            {
+                if (!int.TryParse(sample[i], out int num)) allAreNumber = false;
+            }
+            //If all are numbers, convert
+            int[] sampleintarray = new int[sample.Count];
+            if (allAreNumber)
+            {
+                for (int j = 0; j < sample.Count; j++)
+                {
+                    sampleintarray[j] = Convert.ToInt32(sample[j]);
+                }
+
+                var tempresult = MergeSort<int>.Do(sampleintarray);
+                Result = new string[sampleintarray.Length];
+                var tempHistory = MergeSort<int>.History;
+                for (int j = 0; j < tempresult.Length; j++)
+                {
+                    Result[j] = tempresult[j].ToString();
+                }
+                History.Clear();
+                foreach (int[] ints in tempHistory)
+                {
+                    string[] tempstep = new string[ints.Length];
+                    for (int j = 0; j < ints.Length; j++)
+                    {
+                        tempstep[j] = ints[j].ToString();
+                    }
+
+                    History.Add(tempstep);
+                }
+
+            }
+            else
+            {
+                Result = MergeSort<string>.Do(sample.ToArray());
+                History = MergeSort<string>.History;
+            }
+
             sample = Result.ToList();
             Array.ItemsSource = sample;
-            History = MergeSort<string>.History;
             var x = CreateFlipViews();
             foreach (FlipViewItem flipViewItem in x)
             {
@@ -88,8 +128,8 @@ namespace MergeSortApp
                         newTile.Title = s;
                         newTile.VerticalTitleAlignment = VerticalAlignment.Center;
                         newTile.TitleFontSize = 24;
-                        newTile.MaxHeight = 85;
-                        newTile.MaxWidth = 85;
+                        newTile.MaxWidth =100;
+                        newTile.MaxHeight = 100;
                         stackPanel.Children.Add(newTile);
                     }
 
@@ -107,7 +147,8 @@ namespace MergeSortApp
         private void FlipViewSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var flipview = ((FlipView)sender);
-            FlipView.BannerText = "Step: " + flipview.SelectedIndex;
+            var stepNumber = flipview.SelectedIndex + 1;
+            FlipView.BannerText = "Step: " + stepNumber;
         }
     }
 }
