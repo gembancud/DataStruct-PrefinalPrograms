@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.Remoting;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
@@ -11,14 +12,17 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Markup.Localizer;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using System.Windows.Shapes;
 using FinalProjectApp.Models;
 using FinalProjectBase;
 using MahApps.Metro.Controls.Dialogs;
 using MaterialDesignThemes.Wpf;
 using FinalProjectApp.Properties;
+using static System.Math;
 
 namespace FinalProjectApp.Views
 {
@@ -36,11 +40,12 @@ namespace FinalProjectApp.Views
         public Shape SelectedObject;
         public Graph<LocationVertexPair> AppGraph;
         public IList<Vehicle> VehicleList;
+        public double ClockTimerPeriod = 16;
 
         private Vertex<LocationVertexPair> FromRoad;
         private Vertex<LocationVertexPair> ToRoad;
 
-        DoubleCollection doubleCollection=new DoubleCollection(){2,2};
+        DoubleCollection doubleCollection=new DoubleCollection(){6,6};
 
         public ObservableCollection<Vertex<LocationVertexPair>> LocationCollection
         {
@@ -86,10 +91,12 @@ namespace FinalProjectApp.Views
         private void SetClockTimer()
         {
             ClockTimer = new Timer();
-            ClockTimer.Interval = 16;
-            ClockTimer.Elapsed += new ElapsedEventHandler(ComputeActiveCars);
+            ClockTimer.Interval = ClockTimerPeriod;
+            ClockTimer.Elapsed += new ElapsedEventHandler(SimulationManager);
             ClockTimer.AutoReset = true;
         }
+
+        
 
         private void EnableDrag()
         {
@@ -319,58 +326,7 @@ namespace FinalProjectApp.Views
 
         #endregion
 
-        private void Renderer()
-        {
-            AppCanvas.Children.Clear();
-            //Draw Vertices
-            foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
-            {
-                var tmpElement = appGraphVertex.Data.Element;
-                Canvas.SetTop(tmpElement, appGraphVertex.Data.Y - 25);
-                Canvas.SetLeft(tmpElement, appGraphVertex.Data.X - 25);
-                AppCanvas.Children.Add(tmpElement);
-            }
-
-            //Draw Line
-            foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
-            {
-                foreach (Neighbor<LocationVertexPair> neighbor in appGraphVertex.Neighbors)
-                {
-                    //MainRoad
-                    Line newLine = new Line();
-                    newLine.X2 = appGraphVertex.Data.X;
-                    newLine.Y2 = appGraphVertex.Data.Y;
-
-                    newLine.X1 = neighbor.Vertex.Data.X;
-                    newLine.Y1 = neighbor.Vertex.Data.Y;
-
-                    newLine.Stroke = Brushes.Black;
-                    newLine.StrokeThickness = 40;
-
-                    AppCanvas.Children.Add(newLine);
-
-
-                    //DashLine
-                    newLine = new Line();
-                    newLine.X2 = appGraphVertex.Data.X;
-                    newLine.Y2 = appGraphVertex.Data.Y;
-
-                    newLine.X1 = neighbor.Vertex.Data.X;
-                    newLine.Y1 = neighbor.Vertex.Data.Y;
-
-                    newLine.Stroke = Brushes.White;
-                    newLine.StrokeThickness = 5;
-                    newLine.StrokeDashArray = doubleCollection;
-
-                    AppCanvas.Children.Add(newLine);
-
-                }
-            }
-
-            
-
-
-        }
+        
 
         #region Create Car
 
@@ -395,20 +351,31 @@ namespace FinalProjectApp.Views
             else DisplayToSnackBar("Error in InputFields!");
         }
 
+
         private void CreateCar(string carName, object carFrom, object carTo, double carSpeed)
         {
             AddCarFlyout.IsOpen = false;
             var carFromVertex = carFrom as Vertex<LocationVertexPair>;
             var carToVertex = carTo as Vertex<LocationVertexPair>;
 
-            var tmpVehicle = new Vehicle(carName, carFromVertex, carToVertex, carSpeed);
-            tmpVehicle.Route = AppGraph.CalculateShortestRoutes(tmpVehicle.From.Data.Location.ID);
+            //Assign visual representation
+            Rectangle newRectangle = new Rectangle();
+            newRectangle.Width = 60;
+            newRectangle.Height = 30;
+            newRectangle.Fill = new ImageBrush(new BitmapImage(
+                new Uri(@"Car2.png", UriKind.Relative)));
+
+            //Creates Temporary Vehicle
+            var tmpVehicle = new Vehicle(carName, carFromVertex, carToVertex, carSpeed, newRectangle);
+            tmpVehicle.Route = AppGraph.CalculateShortestRoutes(tmpVehicle.From.ID);
+            tmpVehicle.TotalDistance = tmpVehicle.Route.GetDisplacementOfVertex(tmpVehicle.To);
             tmpVehicle.SetTravelRoute();
             if (tmpVehicle.Route.DisplacementList[carToVertex.ID] == Double.MaxValue)
             {
                 DisplayToSnackBar("Car Not Added! Destination Unreachable");
                 return;
             }
+
             VehicleList.Add(tmpVehicle);
             CarListView.ItemsSource = VehicleCollection;
 
@@ -429,77 +396,190 @@ namespace FinalProjectApp.Views
         #endregion
 
 
-        private void DummyClick(object sender, RoutedEventArgs e)
-        {
-
-            VehicleList[0].Route = AppGraph.CalculateShortestRoutes(VehicleList[0].From.Data.Location.ID);
-            VehicleList[0].SetTravelRoute();
-
-
-
-            //Rectangle newRectangle = new Rectangle();
-            //newRectangle.Width = 30;
-            //newRectangle.Height = 60;
-            //newRectangle.Fill = new ImageBrush(new BitmapImage(
-            //    new Uri(@"Car2.png", UriKind.Relative)));
-
-            //var myRotation = new RotateTransform();
-            //myRotation.Angle = 25;
-            //newRectangle.LayoutTransform = myRotation;
-
-
-            //Canvas.SetTop(newRectangle, 25);
-            //Canvas.SetLeft(newRectangle, 25);
-
-            //AppCanvas.Children.Add(newRectangle);
-        }
-
-
-
-        private void DisplayToSnackBar(string input)
-        {
-            AppSnackBar.MessageQueue = new SnackbarMessageQueue();
-            var fms = AppSnackBar.MessageQueue;
-            Task.Factory.StartNew(() => fms.Enqueue(input));
-        }
-
+        #region Simulation
         private void StartTimeClick(object sender, RoutedEventArgs e)
         {
             RoadButton.IsEnabled = false;
             LocationButton.IsEnabled = false;
-
             //            Start
             if (isSimulating == false)
             {
                 StartButton.Content = "Stop Simulation";
                 isSimulating = true;
                 ClockTimer.Start();
-
+                ActivateAllVehicles();
             }
             //            Stop
             else if (isSimulating == true)
             {
-
-                StartButton.Content = "Begin Simultion";
+                StartButton.Content = "Begin Simulation";
                 isSimulating = false;
 
                 RoadButton.IsEnabled = true;
                 LocationButton.IsEnabled = true;
                 ClockTimer.Stop();
             }
-
-           
         }
 
-        private void ComputeActiveCars(object sender, ElapsedEventArgs e)
+        private void SimulationManager(object sender, ElapsedEventArgs e)
+        {
+            ComputeActiveCars();
+            Renderer();
+        }
+        #endregion
+
+
+
+
+
+        #region Helpers
+        private void Renderer()
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                AppCanvas.Children.Clear();
+                //Draw Vertices
+                foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
+                {
+                    var tmpElement = appGraphVertex.Data.Element;
+                    Canvas.SetTop(tmpElement, appGraphVertex.Data.Y - 25);
+                    Canvas.SetLeft(tmpElement, appGraphVertex.Data.X - 25);
+                    AppCanvas.Children.Add(tmpElement);
+                }
+
+                //Draw Line
+                foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
+                {
+                    foreach (Neighbor<LocationVertexPair> neighbor in appGraphVertex.Neighbors)
+                    {
+                        //MainRoad
+                        Line newLine = new Line();
+                        newLine.X2 = appGraphVertex.Data.X;
+                        newLine.Y2 = appGraphVertex.Data.Y;
+
+                        newLine.X1 = neighbor.Vertex.Data.X;
+                        newLine.Y1 = neighbor.Vertex.Data.Y;
+
+                        newLine.Stroke = Brushes.Black;
+                        newLine.StrokeThickness = 40;
+
+                        AppCanvas.Children.Add(newLine);
+
+
+                        //DashLine
+                        newLine = new Line();
+                        newLine.X2 = appGraphVertex.Data.X;
+                        newLine.Y2 = appGraphVertex.Data.Y;
+
+                        newLine.X1 = neighbor.Vertex.Data.X;
+                        newLine.Y1 = neighbor.Vertex.Data.Y;
+
+                        newLine.Stroke = Brushes.White;
+                        newLine.StrokeThickness = 5;
+                        newLine.StrokeDashArray = doubleCollection;
+
+                        AppCanvas.Children.Add(newLine);
+
+                    }
+                }
+
+                //Draw Cars
+                foreach (Vehicle vehicle in VehicleList)
+                {
+                    if (!vehicle.IsActive) continue;
+                    var tmpVehicleElement = vehicle.Element;
+
+                    Canvas.SetTop(tmpVehicleElement, vehicle.Y-15);
+                    Canvas.SetLeft(tmpVehicleElement, vehicle.X-30);
+
+                    AppCanvas.Children.Add(tmpVehicleElement);
+                }
+            });
+        }
+
+        private void ComputeActiveCars()
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                foreach (Vehicle vehicle in VehicleList)
+                {
+                    if (vehicle.IsActive == false) continue;
+                    if (vehicle.CurrLocation == null) vehicle.CurrLocation = vehicle.From;
+
+                    //Initializer for next travel
+                    if (vehicle.CurrDestination == null)
+                    {
+                        vehicle.CurrDestination = vehicle.TravelRoute.Pop();
+                        //Sets Distance
+                        foreach (Neighbor<LocationVertexPair> currLocationNeighbor in vehicle.CurrLocation.Neighbors)
+                        {
+                            if (currLocationNeighbor.GetVertex() == vehicle.CurrDestination)
+                                vehicle.LocalDistance = currLocationNeighbor.Weight;
+                            break;
+                        }
+
+
+                    }
+                    //Sets car element angle
+                    var deltaY = vehicle.CurrDestination.Data.Y - vehicle.CurrLocation.Data.Y;
+                    var deltaX = vehicle.CurrDestination.Data.X - vehicle.CurrLocation.Data.X;
+
+                    var tmpdeltaY = -deltaY;
+                    var angle = Atan2(tmpdeltaY, deltaX)* (180/PI);
+
+                    var rotation = new RotateTransform();
+                    rotation.Angle = -angle;
+                    vehicle.Element.RenderTransformOrigin= new Point(0.5,0.5);
+                    vehicle.Element.RenderTransform = rotation;
+
+                    //Move vehicle
+                    vehicle.LocalProgress += vehicle.Speed * (ClockTimerPeriod / 1000);
+                    var percentage = vehicle.LocalProgress / vehicle.LocalDistance;
+                    vehicle.X = vehicle.CurrLocation.Data.X + (percentage) * deltaX;
+                    vehicle.Y = vehicle.CurrLocation.Data.Y + (percentage) * deltaY;
+
+
+                    //Check if vehicle  has reached destination
+                    if (vehicle.LocalProgress >= vehicle.LocalDistance)
+                    {
+                        vehicle.CurrLocation = vehicle.CurrDestination;
+                        vehicle.CurrDestination = null;
+                        vehicle.TotalProgress += vehicle.LocalProgress;
+                        vehicle.LocalProgress = 0;
+
+                        //Vehicle has reached final destination
+
+                        if (vehicle.TravelRoute.Count == 0)
+                        {
+                            vehicle.IsActive = false;
+                            DisplayToSnackBar("Car Finished!");
+                        }
+                    }
+                }
+            });
+        }
+
+        private void ActivateAllVehicles()
         {
             foreach (Vehicle vehicle in VehicleList)
             {
-                if (vehicle.IsActive == false) continue;
-                
+                vehicle.IsActive = true;
             }
         }
 
-        
+        private void DisplayToSnackBar(string input)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                AppSnackBar.MessageQueue = new SnackbarMessageQueue();
+                var fms = AppSnackBar.MessageQueue;
+                Task.Factory.StartNew(() => fms.Enqueue(input));
+            });
+
+        }
+        #endregion
+
+
+
     }
 }

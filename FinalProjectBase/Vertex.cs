@@ -22,10 +22,10 @@ namespace FinalProjectBase
         {
             StringBuilder sb= new StringBuilder();
             sb.Append($"{Data}: ");
-            foreach (Neighbor<T> neighbor in Neighbors)
-            {
-                sb.Append($"{neighbor.Vertex.Data}({neighbor.Weight}), ");
-            }
+//            foreach (Neighbor<T> neighbor in Neighbors)
+//            {
+//                sb.Append($"{neighbor.Vertex.Data}({neighbor.Weight}), ");
+//            }
             return sb.ToString();
         }
     }

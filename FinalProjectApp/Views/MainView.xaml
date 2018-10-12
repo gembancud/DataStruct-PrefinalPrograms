@@ -208,6 +208,9 @@
                                 <GridViewColumn
                                     DisplayMemberBinding="{Binding Speed}"
                                     Header="Speed" />
+                                <GridViewColumn
+                                    DisplayMemberBinding="{Binding TotalDistance}"
+                                    Header="Total Distance" />
                             </GridView>
                         </ListView.View>
                     </ListView>

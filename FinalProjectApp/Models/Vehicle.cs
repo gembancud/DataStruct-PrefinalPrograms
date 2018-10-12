@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media.TextFormatting;
+using System.Windows.Shapes;
 using FinalProjectBase;
 
 namespace FinalProjectApp.Models
@@ -21,8 +22,15 @@ namespace FinalProjectApp.Models
         public Route<LocationVertexPair> Route { get; set; }
         public Stack<Vertex<LocationVertexPair>> TravelRoute { get; set; }
         public double TotalDistance { get; set; }
+        public double LocalDistance { get; set; }
+        public Shape Element { get; set; }
+        public double LocalProgress { get; set; }
+        public double TotalProgress { get; set; }
+        public Vertex<LocationVertexPair> CurrLocation { get; set; }
+        public Vertex<LocationVertexPair> CurrDestination { get; set; }
 
-        public Vehicle(string name, Vertex<LocationVertexPair> @from, Vertex<LocationVertexPair> to, double speed)
+
+        public Vehicle(string name, Vertex<LocationVertexPair> @from, Vertex<LocationVertexPair> to, double speed, Shape element)
         {
             Name = name;
             From = @from;
@@ -31,13 +39,14 @@ namespace FinalProjectApp.Models
             Y = @from.Data.Y;
             Speed = speed;
             IsActive = false;
+            Element = element;
         }
 
         // Creates the Order of Vertices to Travel to
         public void SetTravelRoute()
         {
             TravelRoute = new Stack<Vertex<LocationVertexPair>>();
-            TotalDistance = 0;
+            
 
             var tmpVertex = To;
             TravelRoute.Push(tmpVertex);
@@ -46,12 +55,11 @@ namespace FinalProjectApp.Models
                 if (tmpVertex == null) break;
                 int index = tmpVertex.ID;
                 tmpVertex = Route.PredecessorList[index];
-                TotalDistance += Route.DisplacementList[index]; 
-                if (tmpVertex == From) break;
+                
+
+                if (tmpVertex == From ||tmpVertex == null) break;
                 TravelRoute.Push(tmpVertex);
             }
-
-
         }
         
     }

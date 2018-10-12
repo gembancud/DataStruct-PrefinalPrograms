@@ -42,6 +42,7 @@ namespace FinalProjectBase
             return sb.ToString();
         }
 
+        public Vertex<T> GetVertex() => Vertex;
 
     }
 }

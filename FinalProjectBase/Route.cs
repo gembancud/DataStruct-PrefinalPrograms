@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.CodeDom;
+using System.Collections.Generic;
 using System.Security.Principal;
 
 namespace FinalProjectBase
@@ -31,5 +32,11 @@ namespace FinalProjectBase
                 DisplacementList[i] = double.MaxValue;
             }
         }
+
+        public double GetDisplacementOfVertex(Vertex<T> vertex)
+        {
+            return DisplacementList[vertex.ID];
+        }
+
     }
 }
