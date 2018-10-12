@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 
 namespace FinalProjectBase
 {
-    public class Graph<T>
+    public class Graph<T>: IEnumerable<T>
     {
         public IList<Vertex<T>> Vertices { get; set; }
 
@@ -134,6 +135,19 @@ namespace FinalProjectBase
                     DepthFirstSearchRecursion(initialVertexNeighbor.Vertex, visitedVerticesCheck, initialVertexNeighbor.Weight+ currDisplacement);
                 }
             }
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            foreach (var x in Vertices)
+            {
+                yield return x.Data;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

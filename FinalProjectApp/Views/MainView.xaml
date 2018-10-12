@@ -24,6 +24,83 @@
 
 
         Title="MainView" Height="450" Width="800">
+    
+    <!-- AddCar Flyout -->
+    <Controls:MetroWindow.Flyouts>
+        <Controls:FlyoutsControl>
+            <Controls:Flyout
+                x:Name="AddCarFlyout"
+                Position="Bottom"
+                Theme="Accent"
+                >
+                <Grid>
+                    <StackPanel
+                    Orientation="Horizontal"
+                    Margin="15"
+                    >
+                        <TextBox
+                        x:Name="AddCarName"
+                        materialDesign:HintAssist.Hint="Car Name"
+                        Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
+                        Width="150"
+                        />
+                        <ComboBox
+                        materialDesign:HintAssist.Hint="From"
+                        x:Name="AddCarFrom"
+                        Width="150"
+                        ItemsSource="{Binding LocationCollection}"
+                        Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                        IsEditable="False"
+                        >
+
+
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Data.Location.Data}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <ComboBox
+                        materialDesign:HintAssist.Hint="To"
+                        x:Name="AddCarTo"
+                        Width="150"
+                        ItemsSource="{Binding LocationCollection}"
+                        Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                        IsEditable="False"
+                    >
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Data.Location.Data}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+
+                        </ComboBox>
+                        <TextBox
+                        x:Name="AddCarSpeed"
+                        materialDesign:HintAssist.Hint="Car Speed"
+                        Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                        Width="65"
+                        />
+
+                        <Button 
+                        Click="CreateCarButtonClick"
+                        >Create Car</Button>
+
+                    </StackPanel>
+
+
+                </Grid>
+
+
+
+
+            </Controls:Flyout>
+
+        </Controls:FlyoutsControl>
+    </Controls:MetroWindow.Flyouts>
+
+
     <Grid
         x:Name="AppGrid"
         >
@@ -32,7 +109,7 @@
 
             <!-- Street Tab -->
             <Controls:MetroTabItem Header="Street">
-                <Grid Background="Green">
+                <Grid Background="GhostWhite">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -47,21 +124,21 @@
                     <!--Canvas-->
                     <Canvas 
                         x:Name="AppCanvas"
-                        Background="AntiqueWhite"
+                        Background="DarkSlateGray"
                         Margin="15"
                         Grid.Row="1"
                             >
                     </Canvas>
 
                     <!--RightPanel-->
-                    <StackPanel
+                    <!--<StackPanel
                         Grid.Column="1"
                         Grid.Row="1"
                         >
-                        <Button x:Name ="Dummy">
+                        <Button x:Name ="Dummy" Click="DummyClick">
                             woops
                         </Button>
-                    </StackPanel>
+                    </StackPanel>-->
 
                     <!-- Top Panel -->
                     <StackPanel
@@ -81,19 +158,19 @@
                             Content="Start Adding Roads"
                             Width="175" Click="RoadButtonClick"
                             />
+                        <!-- Time Button -->
+                        <Button
+                            x:Name="StartButton"
+                            Grid.Column="1" Click="StartTimeClick"
+                        >
+                            Begin Simulation
+                        </Button>
+
 
                     </StackPanel>
 
-                    <!-- Time Button -->
-                    <Button
-                        x:Name="TimeButton"
-                        Grid.Column="1"
-
-
-                        >
-                        Start Time
-                    </Button>
-
+                    
+                    
 
                 </Grid>
             </Controls:MetroTabItem>
@@ -109,9 +186,31 @@
                     <StackPanel
                         Orientation="Horizontal"
                         >
-                        <Button>Add Car</Button>
-                        <Button>Remove Car</Button>
+                        <Button Click="AddCarClick">Add Car</Button>
+                        <Button Click="RemoveCarClick">Remove Car</Button>
                     </StackPanel>
+
+                    <ListView
+                        Grid.Row="1"
+                        x:Name="CarListView"
+                        >
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn
+                                    DisplayMemberBinding="{Binding Name}"
+                                    Header="Name" />
+                                <GridViewColumn
+                                    DisplayMemberBinding="{Binding From.Data.Location.Data}"
+                                    Header="From Location" />
+                                <GridViewColumn
+                                    DisplayMemberBinding="{Binding To.Data.Location.Data}"
+                                    Header="To Locaton" />
+                                <GridViewColumn
+                                    DisplayMemberBinding="{Binding Speed}"
+                                    Header="Speed" />
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
 
 
 
@@ -120,12 +219,12 @@
 
             </Controls:MetroTabItem>
         </Controls:MetroAnimatedSingleRowTabControl>
-        
+
 
         <materialDesign:Snackbar
             x:Name="AppSnackBar"
             >
-            
+
         </materialDesign:Snackbar>
     </Grid>
 </Controls:MetroWindow>

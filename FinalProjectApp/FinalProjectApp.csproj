@@ -117,7 +117,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Page Include="Views\MainView.xaml">
       <SubType>Designer</SubType>
@@ -129,6 +128,15 @@
       <Project>{d88ef206-df17-4cd3-a2e1-bfeba11cc386}</Project>
       <Name>FinalProjectBase</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Car2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Car.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Properties\Car2.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

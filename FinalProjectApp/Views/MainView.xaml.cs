@@ -1,6 +1,7 @@
 ﻿using MahApps.Metro.Controls;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ using FinalProjectApp.Models;
 using FinalProjectBase;
 using MahApps.Metro.Controls.Dialogs;
 using MaterialDesignThemes.Wpf;
+using FinalProjectApp.Properties;
 
 namespace FinalProjectApp.Views
 {
@@ -27,26 +29,67 @@ namespace FinalProjectApp.Views
     {
         private bool isAddingLocation = false;
         private bool isAddingRoads = false;
+        private bool isSimulating = false;
         public static Timer dragTimer;
+        public static Timer ClockTimer;
         public Point CurrPoint;
         public Shape SelectedObject;
         public Graph<LocationVertexPair> AppGraph;
+        public IList<Vehicle> VehicleList;
 
         private Vertex<LocationVertexPair> FromRoad;
         private Vertex<LocationVertexPair> ToRoad;
 
         DoubleCollection doubleCollection=new DoubleCollection(){2,2};
 
+        public ObservableCollection<Vertex<LocationVertexPair>> LocationCollection
+        {
+            get
+            {
+                var tmpcollection = new ObservableCollection<Vertex<LocationVertexPair>>();
+                foreach (var x in AppGraph.Vertices)
+                {
+                    tmpcollection.Add(x);
+                }
+
+                return tmpcollection;
+            }
+        }
+
+        public ObservableCollection<Vehicle> VehicleCollection
+        {
+            get
+            {
+                var tmpcollection = new ObservableCollection<Vehicle>();
+                foreach (var vehicle in VehicleList)
+                {
+                    tmpcollection.Add(vehicle);
+                }
+
+                return tmpcollection;
+            }
+        }
+
 
         public MainView()
         {
             InitializeComponent();
             AppGraph = new Graph<LocationVertexPair>();
+            VehicleList = new List<Vehicle>();
 
             EnableDrag();
+            SetClockTimer();
         }
 
-        #region Drag Functionality
+        #region Constructor Operations
+
+        private void SetClockTimer()
+        {
+            ClockTimer = new Timer();
+            ClockTimer.Interval = 16;
+            ClockTimer.Elapsed += new ElapsedEventHandler(ComputeActiveCars);
+            ClockTimer.AutoReset = true;
+        }
 
         private void EnableDrag()
         {
@@ -54,20 +97,22 @@ namespace FinalProjectApp.Views
             AppCanvas.MouseUp += new MouseButtonEventHandler(EndDrag);
 
             dragTimer = new Timer();
-            dragTimer.Interval = 5;
+            dragTimer.Interval = 16;
             dragTimer.Elapsed += new ElapsedEventHandler(WhileDragged);
             dragTimer.AutoReset = true;
 
         }
 
+        #endregion
+        #region Drag Functionality
+
+
         private void WhileDragged(object sender, ElapsedEventArgs e)
         {
-            if (SelectedObject == null) return;
-
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
+                if (SelectedObject == null) return;
                 CurrPoint = Mouse.GetPosition(AppCanvas);
-
                 Canvas.SetTop(SelectedObject, CurrPoint.Y - 25);
                 Canvas.SetLeft(SelectedObject, CurrPoint.X - 25);
 
@@ -104,6 +149,7 @@ namespace FinalProjectApp.Views
             AppCanvas.MouseDown -= new MouseButtonEventHandler(StartDrag);
             AppCanvas.MouseUp -= new MouseButtonEventHandler(EndDrag);
             RoadButton.IsEnabled = false;
+            StartButton.IsEnabled = false;
 
             //            Start
             if (isAddingLocation == false)
@@ -124,6 +170,8 @@ namespace FinalProjectApp.Views
                 AppCanvas.MouseDown += new MouseButtonEventHandler(StartDrag);
                 AppCanvas.MouseUp += new MouseButtonEventHandler(EndDrag);
                 RoadButton.IsEnabled = true;
+                StartButton.IsEnabled = true;
+
             }
 
         }
@@ -137,7 +185,7 @@ namespace FinalProjectApp.Views
         private async Task AskLocationDialog(Point p)
         {
             var result = await this.ShowInputAsync("Location", "Input Locaton Name");
-            if (result == null) return;
+            if (String.IsNullOrWhiteSpace(result)) return;
 
             Ellipse newEllipse = new Ellipse();
             newEllipse.Fill = Brushes.Blue;
@@ -155,8 +203,7 @@ namespace FinalProjectApp.Views
         }
 
         #endregion
-
-
+        #region Add Roads
 
         private void RoadButtonClick(object sender, RoutedEventArgs e)
         {
@@ -164,6 +211,8 @@ namespace FinalProjectApp.Views
             AppCanvas.MouseDown -= new MouseButtonEventHandler(StartDrag);
             AppCanvas.MouseUp -= new MouseButtonEventHandler(EndDrag);
             LocationButton.IsEnabled = false;
+            StartButton.IsEnabled = false;
+
 
             //            Start
             if (isAddingRoads == false)
@@ -183,6 +232,8 @@ namespace FinalProjectApp.Views
                 AppCanvas.MouseDown += new MouseButtonEventHandler(StartDrag);
                 AppCanvas.MouseUp += new MouseButtonEventHandler(EndDrag);
                 LocationButton.IsEnabled = true;
+                StartButton.IsEnabled = true;
+
 
                 FromRoad = null;
                 ToRoad = null;
@@ -236,10 +287,8 @@ namespace FinalProjectApp.Views
             {
                 if (fromRoadNeighbor.Vertex == ToRoad)
                 {
-                    AppSnackBar.MessageQueue = new SnackbarMessageQueue();
-                    var fms = AppSnackBar.MessageQueue;
-                    Task.Factory.StartNew(() => fms.Enqueue("Road Already Exists!"));
-                    
+                    DisplayToSnackBar("Road Already Exists!");
+
 
                     return;
                 }
@@ -251,41 +300,37 @@ namespace FinalProjectApp.Views
             if (Double.TryParse(result.ToString(), out double dresult))
             {
                 AppGraph.AddUndirectedNeighbor(FromRoad.ID, ToRoad.ID, dresult);
-                AppSnackBar.MessageQueue = new SnackbarMessageQueue();
-                var ms = AppSnackBar.MessageQueue;
-                Task.Factory.StartNew(() => ms.Enqueue("Road Successfully Added!"));
+                DisplayToSnackBar("Road Successfully Added!");
                 ToRoad = null;
                 FromRoad = null;
                 Renderer();
             }
             else
             {
-                AppSnackBar.MessageQueue = new SnackbarMessageQueue();
-                var ms = AppSnackBar.MessageQueue;
-                Task.Factory.StartNew(() => ms.Enqueue("Invalid Weight Input!"));
+                DisplayToSnackBar("Invalid Weight Input!");
                 ToRoad = null;
                 FromRoad = null;
             }
 
-            
+
 
 
         }
 
+        #endregion
+
         private void Renderer()
         {
             AppCanvas.Children.Clear();
-
+            //Draw Vertices
             foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
             {
                 var tmpElement = appGraphVertex.Data.Element;
                 Canvas.SetTop(tmpElement, appGraphVertex.Data.Y - 25);
                 Canvas.SetLeft(tmpElement, appGraphVertex.Data.X - 25);
                 AppCanvas.Children.Add(tmpElement);
-
-
-
             }
+
             //Draw Line
             foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
             {
@@ -322,7 +367,139 @@ namespace FinalProjectApp.Views
                 }
             }
 
+            
+
 
         }
+
+        #region Create Car
+
+        private void AddCarClick(object sender, RoutedEventArgs e)
+        {
+            AddCarFlyout.IsOpen = true;
+            AddCarFrom.ItemsSource = LocationCollection;
+            AddCarTo.ItemsSource = LocationCollection;
+        }
+
+        private void CreateCarButtonClick(object sender, RoutedEventArgs e)
+        {
+            if (!String.IsNullOrWhiteSpace(AddCarName.Text) &&
+                !String.IsNullOrWhiteSpace(AddCarFrom.Text) &&
+                !String.IsNullOrWhiteSpace(AddCarTo.Text) &&
+                !String.IsNullOrWhiteSpace(AddCarSpeed.Text) &&
+                Double.TryParse(AddCarSpeed.Text, out double carSpeed)
+            )
+            {
+                CreateCar(AddCarName.Text, AddCarFrom.SelectionBoxItem, AddCarTo.SelectionBoxItem, carSpeed);
+            }
+            else DisplayToSnackBar("Error in InputFields!");
+        }
+
+        private void CreateCar(string carName, object carFrom, object carTo, double carSpeed)
+        {
+            AddCarFlyout.IsOpen = false;
+            var carFromVertex = carFrom as Vertex<LocationVertexPair>;
+            var carToVertex = carTo as Vertex<LocationVertexPair>;
+
+            var tmpVehicle = new Vehicle(carName, carFromVertex, carToVertex, carSpeed);
+            tmpVehicle.Route = AppGraph.CalculateShortestRoutes(tmpVehicle.From.Data.Location.ID);
+            tmpVehicle.SetTravelRoute();
+            if (tmpVehicle.Route.DisplacementList[carToVertex.ID] == Double.MaxValue)
+            {
+                DisplayToSnackBar("Car Not Added! Destination Unreachable");
+                return;
+            }
+            VehicleList.Add(tmpVehicle);
+            CarListView.ItemsSource = VehicleCollection;
+
+            DisplayToSnackBar("Car Successfully Added!");
+        }
+
+        #endregion
+        #region Remove car
+
+        private void RemoveCarClick(object sender, RoutedEventArgs e)
+        {
+            var toReemove = CarListView.SelectedItem as Vehicle;
+            VehicleList.Remove(toReemove);
+            CarListView.ItemsSource = VehicleCollection;
+            DisplayToSnackBar("Car was removed!");
+        }
+
+        #endregion
+
+
+        private void DummyClick(object sender, RoutedEventArgs e)
+        {
+
+            VehicleList[0].Route = AppGraph.CalculateShortestRoutes(VehicleList[0].From.Data.Location.ID);
+            VehicleList[0].SetTravelRoute();
+
+
+
+            //Rectangle newRectangle = new Rectangle();
+            //newRectangle.Width = 30;
+            //newRectangle.Height = 60;
+            //newRectangle.Fill = new ImageBrush(new BitmapImage(
+            //    new Uri(@"Car2.png", UriKind.Relative)));
+
+            //var myRotation = new RotateTransform();
+            //myRotation.Angle = 25;
+            //newRectangle.LayoutTransform = myRotation;
+
+
+            //Canvas.SetTop(newRectangle, 25);
+            //Canvas.SetLeft(newRectangle, 25);
+
+            //AppCanvas.Children.Add(newRectangle);
+        }
+
+
+
+        private void DisplayToSnackBar(string input)
+        {
+            AppSnackBar.MessageQueue = new SnackbarMessageQueue();
+            var fms = AppSnackBar.MessageQueue;
+            Task.Factory.StartNew(() => fms.Enqueue(input));
+        }
+
+        private void StartTimeClick(object sender, RoutedEventArgs e)
+        {
+            RoadButton.IsEnabled = false;
+            LocationButton.IsEnabled = false;
+
+            //            Start
+            if (isSimulating == false)
+            {
+                StartButton.Content = "Stop Simulation";
+                isSimulating = true;
+                ClockTimer.Start();
+
+            }
+            //            Stop
+            else if (isSimulating == true)
+            {
+
+                StartButton.Content = "Begin Simultion";
+                isSimulating = false;
+
+                RoadButton.IsEnabled = true;
+                LocationButton.IsEnabled = true;
+                ClockTimer.Stop();
+            }
+
+           
+        }
+
+        private void ComputeActiveCars(object sender, ElapsedEventArgs e)
+        {
+            foreach (Vehicle vehicle in VehicleList)
+            {
+                if (vehicle.IsActive == false) continue;
+                
+            }
+        }
+
+        
     }
 }
