@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.Remoting;
 using System.Text;
@@ -31,6 +32,7 @@ namespace FinalProjectApp.Views
     /// </summary>
     public partial class MainView : MetroWindow
     {
+        #region Fields and Properties
         private bool isAddingLocation = false;
         private bool isAddingRoads = false;
         private bool isSimulating = false;
@@ -41,12 +43,9 @@ namespace FinalProjectApp.Views
         public Graph<LocationVertexPair> AppGraph;
         public IList<Vehicle> VehicleList;
         public double ClockTimerPeriod = 16;
-
         private Vertex<LocationVertexPair> FromRoad;
         private Vertex<LocationVertexPair> ToRoad;
-
-        DoubleCollection doubleCollection=new DoubleCollection(){6,6};
-
+        DoubleCollection doubleCollection = new DoubleCollection() { 6, 6 };
         public ObservableCollection<Vertex<LocationVertexPair>> LocationCollection
         {
             get
@@ -60,7 +59,6 @@ namespace FinalProjectApp.Views
                 return tmpcollection;
             }
         }
-
         public ObservableCollection<Vehicle> VehicleCollection
         {
             get
@@ -74,7 +72,14 @@ namespace FinalProjectApp.Views
                 return tmpcollection;
             }
         }
+        private MediaPlayer mediaPlayer = new MediaPlayer();
+        private bool isPlaying = false;
+        private Random random = new Random();
 
+
+        #endregion
+        
+        
 
         public MainView()
         {
@@ -84,10 +89,12 @@ namespace FinalProjectApp.Views
 
             EnableDrag();
             SetClockTimer();
+            PrepareMusic();
         }
 
-        #region Constructor Operations
 
+
+        #region Constructor Operations
         private void SetClockTimer()
         {
             ClockTimer = new Timer();
@@ -95,9 +102,6 @@ namespace FinalProjectApp.Views
             ClockTimer.Elapsed += new ElapsedEventHandler(SimulationManager);
             ClockTimer.AutoReset = true;
         }
-
-        
-
         private void EnableDrag()
         {
             AppCanvas.MouseDown += new MouseButtonEventHandler(StartDrag);
@@ -109,19 +113,23 @@ namespace FinalProjectApp.Views
             dragTimer.AutoReset = true;
 
         }
-
+        private void PrepareMusic()
+        {
+            int index = random.Next(1, 10);
+            string musicpath = "Music" + index + ".mp3";
+            mediaPlayer.Open(new Uri(@musicpath, UriKind.Relative));
+        }
         #endregion
+
         #region Drag Functionality
-
-
         private void WhileDragged(object sender, ElapsedEventArgs e)
         {
             Application.Current.Dispatcher.Invoke((Action)delegate
             {
                 if (SelectedObject == null) return;
                 CurrPoint = Mouse.GetPosition(AppCanvas);
-                Canvas.SetTop(SelectedObject, CurrPoint.Y - 25);
-                Canvas.SetLeft(SelectedObject, CurrPoint.X - 25);
+//                Canvas.SetTop(SelectedObject, CurrPoint.Y - 70);
+//                Canvas.SetLeft(SelectedObject, CurrPoint.X - 70);
 
                 int index = AppCanvas.Children.IndexOf(SelectedObject);
                 AppGraph.Vertices[index].Data.X = CurrPoint.X;
@@ -130,14 +138,12 @@ namespace FinalProjectApp.Views
                 Renderer();
             });
         }
-
         private void EndDrag(object sender, MouseButtonEventArgs e)
         {
             dragTimer.Stop();
             SelectedObject = null;
 
         }
-
         private void StartDrag(object sender, MouseButtonEventArgs e)
         {
             CurrPoint = Mouse.GetPosition(AppCanvas);
@@ -146,10 +152,9 @@ namespace FinalProjectApp.Views
             if (SelectedObject == null) return;
             dragTimer.Start();
         }
-
         #endregion
-        #region Add Locations
 
+        #region Add Locations
         private void LocationButtonClick(object sender, RoutedEventArgs e)
         {
             AppCanvas.MouseDown -= new MouseButtonEventHandler(AddRoadEvent);
@@ -182,25 +187,29 @@ namespace FinalProjectApp.Views
             }
 
         }
-
         private void AddLocationEvent(object sender, MouseButtonEventArgs e)
         {
             Point p = Mouse.GetPosition(AppCanvas);
             AskLocationDialog(p);
         }
-
         private async Task AskLocationDialog(Point p)
         {
             var result = await this.ShowInputAsync("Location", "Input Locaton Name");
             if (String.IsNullOrWhiteSpace(result)) return;
 
             Ellipse newEllipse = new Ellipse();
-            newEllipse.Fill = Brushes.Blue;
-            newEllipse.Width = 50;
-            newEllipse.Height = 50;
 
-            Canvas.SetTop(newEllipse, p.Y - 25);
-            Canvas.SetLeft(newEllipse, p.X - 25);
+            newEllipse.Width = 60;
+            newEllipse.Height = 60;
+            newEllipse.Fill = Brushes.Black;
+            newEllipse.StrokeThickness = 4;
+            newEllipse.Stroke = Brushes.Azure;
+
+            //newEllipse.Fill = new ImageBrush(new BitmapImage(
+            //    new Uri(@"Marker.png", UriKind.Relative)));
+
+//            Canvas.SetTop(newEllipse, p.Y - 30);
+//            Canvas.SetLeft(newEllipse, p.X - 50);
 
             AppCanvas.Children.Add(newEllipse);
 
@@ -208,10 +217,9 @@ namespace FinalProjectApp.Views
             AppGraph.AddVertex(pair);
             Renderer();
         }
-
         #endregion
-        #region Add Roads
 
+        #region Add Roads
         private void RoadButtonClick(object sender, RoutedEventArgs e)
         {
             AppCanvas.MouseDown -= new MouseButtonEventHandler(AddLocationEvent);
@@ -246,9 +254,6 @@ namespace FinalProjectApp.Views
                 ToRoad = null;
             }
         }
-
-
-
         private void AddRoadEvent(object sender, MouseButtonEventArgs e)
         {
             if (FromRoad == null)
@@ -287,7 +292,6 @@ namespace FinalProjectApp.Views
 
 
         }
-
         private async Task CreateNeighbors()
         {
             foreach (Neighbor<LocationVertexPair> fromRoadNeighbor in FromRoad.Neighbors)
@@ -323,23 +327,19 @@ namespace FinalProjectApp.Views
 
 
         }
-
         #endregion
 
-        
-
         #region Create Car
-
         private void AddCarClick(object sender, RoutedEventArgs e)
         {
             AddCarFlyout.IsOpen = true;
             AddCarFrom.ItemsSource = LocationCollection;
             AddCarTo.ItemsSource = LocationCollection;
         }
-
         private void CreateCarButtonClick(object sender, RoutedEventArgs e)
         {
             if (!String.IsNullOrWhiteSpace(AddCarName.Text) &&
+                !String.IsNullOrWhiteSpace(CarDesignComboBox.Text)&&
                 !String.IsNullOrWhiteSpace(AddCarFrom.Text) &&
                 !String.IsNullOrWhiteSpace(AddCarTo.Text) &&
                 !String.IsNullOrWhiteSpace(AddCarSpeed.Text) &&
@@ -350,8 +350,6 @@ namespace FinalProjectApp.Views
             }
             else DisplayToSnackBar("Error in InputFields!");
         }
-
-
         private void CreateCar(string carName, object carFrom, object carTo, double carSpeed)
         {
             AddCarFlyout.IsOpen = false;
@@ -362,8 +360,9 @@ namespace FinalProjectApp.Views
             Rectangle newRectangle = new Rectangle();
             newRectangle.Width = 60;
             newRectangle.Height = 30;
+            string carpath = "Car" + CarDesignComboBox.SelectedIndex + ".png";
             newRectangle.Fill = new ImageBrush(new BitmapImage(
-                new Uri(@"Car2.png", UriKind.Relative)));
+                new Uri(@carpath, UriKind.Relative)));
 
             //Creates Temporary Vehicle
             var tmpVehicle = new Vehicle(carName, carFromVertex, carToVertex, carSpeed, newRectangle);
@@ -375,16 +374,16 @@ namespace FinalProjectApp.Views
                 DisplayToSnackBar("Car Not Added! Destination Unreachable");
                 return;
             }
+            tmpVehicle.CurrLocation = FromRoad;
 
             VehicleList.Add(tmpVehicle);
             CarListView.ItemsSource = VehicleCollection;
 
             DisplayToSnackBar("Car Successfully Added!");
         }
-
         #endregion
-        #region Remove car
 
+        #region Remove car
         private void RemoveCarClick(object sender, RoutedEventArgs e)
         {
             var toReemove = CarListView.SelectedItem as Vehicle;
@@ -392,9 +391,7 @@ namespace FinalProjectApp.Views
             CarListView.ItemsSource = VehicleCollection;
             DisplayToSnackBar("Car was removed!");
         }
-
         #endregion
-
 
         #region Simulation
         private void StartTimeClick(object sender, RoutedEventArgs e)
@@ -406,8 +403,8 @@ namespace FinalProjectApp.Views
             {
                 StartButton.Content = "Stop Simulation";
                 isSimulating = true;
+//                ActivateAllVehicles();
                 ClockTimer.Start();
-                ActivateAllVehicles();
             }
             //            Stop
             else if (isSimulating == true)
@@ -420,17 +417,13 @@ namespace FinalProjectApp.Views
                 ClockTimer.Stop();
             }
         }
-
         private void SimulationManager(object sender, ElapsedEventArgs e)
         {
+            TimerDisplay();
             ComputeActiveCars();
             Renderer();
         }
         #endregion
-
-
-
-
 
         #region Helpers
         private void Renderer()
@@ -441,10 +434,26 @@ namespace FinalProjectApp.Views
                 //Draw Vertices
                 foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
                 {
+                    //Vertex
                     var tmpElement = appGraphVertex.Data.Element;
-                    Canvas.SetTop(tmpElement, appGraphVertex.Data.Y - 25);
-                    Canvas.SetLeft(tmpElement, appGraphVertex.Data.X - 25);
+                    Canvas.SetTop(tmpElement, appGraphVertex.Data.Y - 30);
+                    Canvas.SetLeft(tmpElement, appGraphVertex.Data.X - 30);
                     AppCanvas.Children.Add(tmpElement);
+                }
+
+                //Draw Location Chips
+                foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
+                {
+                    //Vertex Name
+                    Chip newChip = new Chip();
+                    var tmpChipName = appGraphVertex.Data.Location.Data;
+                    newChip.Content = tmpChipName;
+                    newChip.Foreground = Brushes.AliceBlue;
+                    newChip.RenderTransformOrigin = new Point(0.5, 0.5);
+
+                    Canvas.SetTop(newChip, appGraphVertex.Data.Y + 20);
+                    Canvas.SetLeft(newChip, appGraphVertex.Data.X - 25);
+                    AppCanvas.Children.Add(newChip);
                 }
 
                 //Draw Line
@@ -461,9 +470,24 @@ namespace FinalProjectApp.Views
                         newLine.Y1 = neighbor.Vertex.Data.Y;
 
                         newLine.Stroke = Brushes.Black;
-                        newLine.StrokeThickness = 40;
+                        newLine.StrokeThickness = 30;
+                        newLine.StrokeEndLineCap = PenLineCap.Round;
+                        newLine.StrokeStartLineCap = PenLineCap.Round;
 
                         AppCanvas.Children.Add(newLine);
+
+                        //RoadLength Chip
+                        Chip newChip = new Chip();
+                        newChip.Content = neighbor.Weight;
+                        newChip.Foreground = Brushes.LightCyan;
+                        newChip.RenderTransformOrigin = new Point(0.5, 0.5);
+
+                        var deltaY = appGraphVertex.Data.Y - neighbor.Vertex.Data.Y;
+                        var deltaX = appGraphVertex.Data.X - neighbor.Vertex.Data.X;
+
+                        Canvas.SetTop(newChip, neighbor.Vertex.Data.Y + (0.5* deltaY) -40);
+                        Canvas.SetLeft(newChip, neighbor.Vertex.Data.X + (0.5* deltaX) -40);
+                        AppCanvas.Children.Add(newChip);
 
 
                         //DashLine
@@ -492,11 +516,40 @@ namespace FinalProjectApp.Views
                     Canvas.SetTop(tmpVehicleElement, vehicle.Y-15);
                     Canvas.SetLeft(tmpVehicleElement, vehicle.X-30);
 
+                    //Sets car element angle
+                    var deltaY = vehicle.CurrDestination.Data.Y - vehicle.CurrLocation.Data.Y;
+                    var deltaX = vehicle.CurrDestination.Data.X - vehicle.CurrLocation.Data.X;
+
+                    var tmpdeltaY = -deltaY;
+                    var angle = Atan2(tmpdeltaY, deltaX) * (180 / PI);
+
+                    var rotation = new RotateTransform();
+                    rotation.Angle = -angle;
+                    vehicle.Element.RenderTransformOrigin = new Point(0.5, 0.5);
+                    vehicle.Element.RenderTransform = rotation;
+
+                    //Move vehicle
+                    vehicle.LocalProgress += vehicle.Speed * (ClockTimerPeriod / 1000);
+                    var percentage = vehicle.LocalProgress / vehicle.LocalDistance;
+                    vehicle.X = vehicle.CurrLocation.Data.X + (percentage) * deltaX;
+                    vehicle.Y = vehicle.CurrLocation.Data.Y + (percentage) * deltaY;
+
+
+                    //Car Chip
+                    Chip newChip = new Chip();
+                    var tmpChipName = vehicle.Name;
+                    newChip.Content = tmpChipName;
+                    newChip.Foreground = Brushes.AliceBlue;
+                    newChip.RenderTransformOrigin = new Point(0.5, 0.5);
+
+                    Canvas.SetTop(newChip, vehicle.Y + 20);
+                    Canvas.SetLeft(newChip, vehicle.X - 25);
+
+                    AppCanvas.Children.Add(newChip);
                     AppCanvas.Children.Add(tmpVehicleElement);
                 }
             });
         }
-
         private void ComputeActiveCars()
         {
             this.Dispatcher.Invoke(() =>
@@ -518,26 +571,7 @@ namespace FinalProjectApp.Views
                             break;
                         }
 
-
                     }
-                    //Sets car element angle
-                    var deltaY = vehicle.CurrDestination.Data.Y - vehicle.CurrLocation.Data.Y;
-                    var deltaX = vehicle.CurrDestination.Data.X - vehicle.CurrLocation.Data.X;
-
-                    var tmpdeltaY = -deltaY;
-                    var angle = Atan2(tmpdeltaY, deltaX)* (180/PI);
-
-                    var rotation = new RotateTransform();
-                    rotation.Angle = -angle;
-                    vehicle.Element.RenderTransformOrigin= new Point(0.5,0.5);
-                    vehicle.Element.RenderTransform = rotation;
-
-                    //Move vehicle
-                    vehicle.LocalProgress += vehicle.Speed * (ClockTimerPeriod / 1000);
-                    var percentage = vehicle.LocalProgress / vehicle.LocalDistance;
-                    vehicle.X = vehicle.CurrLocation.Data.X + (percentage) * deltaX;
-                    vehicle.Y = vehicle.CurrLocation.Data.Y + (percentage) * deltaY;
-
 
                     //Check if vehicle  has reached destination
                     if (vehicle.LocalProgress >= vehicle.LocalDistance)
@@ -552,13 +586,22 @@ namespace FinalProjectApp.Views
                         if (vehicle.TravelRoute.Count == 0)
                         {
                             vehicle.IsActive = false;
-                            DisplayToSnackBar("Car Finished!");
+                            DisplayToSnackBar($"{vehicle.Name} has Finished! Travelling");
                         }
                     }
                 }
             });
         }
+        private void TimerDisplay()
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                if (TimeElapsed.Text == "Time Elapsed") TimeElapsed.Text = "0";
+                double time = (ClockTimerPeriod / 1000) + Convert.ToDouble(TimeElapsed.Text);
+                TimeElapsed.Text = time.ToString();
 
+            });
+        }
         private void ActivateAllVehicles()
         {
             foreach (Vehicle vehicle in VehicleList)
@@ -566,7 +609,6 @@ namespace FinalProjectApp.Views
                 vehicle.IsActive = true;
             }
         }
-
         private void DisplayToSnackBar(string input)
         {
             this.Dispatcher.Invoke(() =>
@@ -577,6 +619,31 @@ namespace FinalProjectApp.Views
             });
 
         }
+        private void PlayMusicClick(object sender, RoutedEventArgs e)
+        {
+            //Start
+            if (!isPlaying)
+            {
+                mediaPlayer.Play();
+                MusicTextBlock.Text = "Stop Music";
+                isPlaying = true;
+            }
+            //Stop
+            else
+            {
+                MusicTextBlock.Text = "Play Music";
+                mediaPlayer.Pause();
+                isPlaying = false;
+            }
+        }
+        private void NextMusicClick(object sender, RoutedEventArgs e)
+        {
+            int index = random.Next(1, 10);
+            string musicpath = "Music" + index + ".mp3";
+            mediaPlayer.Open(new Uri(@musicpath, UriKind.Relative));
+            mediaPlayer.Play();
+        }
+
         #endregion
 
 

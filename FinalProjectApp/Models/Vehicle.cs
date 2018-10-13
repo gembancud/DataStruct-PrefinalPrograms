@@ -38,7 +38,7 @@ namespace FinalProjectApp.Models
             X = @from.Data.X;
             Y = @from.Data.Y;
             Speed = speed;
-            IsActive = false;
+            IsActive = true;
             Element = element;
         }
 

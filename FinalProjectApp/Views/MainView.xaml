@@ -23,31 +23,61 @@
         FontFamily="{DynamicResource MaterialDesignFont}"           
 
 
-        Title="MainView" Height="450" Width="800">
-    
+        Title="Car Simulator" Height="450" Width="800">
+
     <!-- AddCar Flyout -->
     <Controls:MetroWindow.Flyouts>
         <Controls:FlyoutsControl>
             <Controls:Flyout
                 x:Name="AddCarFlyout"
-                Position="Bottom"
+                Position="Right"
                 Theme="Accent"
                 >
                 <Grid>
                     <StackPanel
-                    Orientation="Horizontal"
+                    Orientation="Vertical"
                     Margin="15"
                     >
                         <TextBox
                         x:Name="AddCarName"
                         materialDesign:HintAssist.Hint="Car Name"
                         Style="{StaticResource MaterialDesignFloatingHintTextBox}" 
-                        Width="150"
+                        Width="130"
                         />
+                        <ComboBox
+                            materialDesign:HintAssist.Hint="Choose Car Design"
+                            x:Name="CarDesignComboBox"
+                            MinWidth="130"
+                            
+                            Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                            IsEditable="False"
+                        >
+                            <ComboBoxItem> 
+                                <Image 
+                                    Width="80" 
+                                    Height="40" 
+                                    Source="../Images/Car0.png" 
+                                    ></Image> 
+                             </ComboBoxItem><ComboBoxItem> 
+                                <Image 
+                                    Width="80" 
+                                    Height="40" 
+                                    Source="../Images/Car1.png" 
+                                    ></Image> 
+                             </ComboBoxItem><ComboBoxItem> 
+                                <Image 
+                                    Width="80" 
+                                    Height="40" 
+                                    Source="../Images/Car2.png" 
+                                    ></Image> 
+                             </ComboBoxItem> 
+                        </ComboBox>
+                        
+
                         <ComboBox
                         materialDesign:HintAssist.Hint="From"
                         x:Name="AddCarFrom"
-                        Width="150"
+                        Width="130"
                         ItemsSource="{Binding LocationCollection}"
                         Style="{StaticResource MaterialDesignFloatingHintComboBox}"
                         IsEditable="False"
@@ -64,7 +94,7 @@
                         <ComboBox
                         materialDesign:HintAssist.Hint="To"
                         x:Name="AddCarTo"
-                        Width="150"
+                        Width="130"
                         ItemsSource="{Binding LocationCollection}"
                         Style="{StaticResource MaterialDesignFloatingHintComboBox}"
                         IsEditable="False"
@@ -80,10 +110,11 @@
                         x:Name="AddCarSpeed"
                         materialDesign:HintAssist.Hint="Car Speed"
                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
-                        Width="65"
+                        Width="130"
                         />
 
                         <Button 
+                            Margin="15"
                         Click="CreateCarButtonClick"
                         >Create Car</Button>
 
@@ -100,16 +131,39 @@
         </Controls:FlyoutsControl>
     </Controls:MetroWindow.Flyouts>
 
+    <!-- Window Buttons -->
+    <Controls:MetroWindow.RightWindowCommands>
+        <Controls:WindowCommands>
+            <Button Click="PlayMusicClick">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock 
+                        x:Name="MusicTextBlock"
+                        Margin="4 0 0 0"
+                               VerticalAlignment="Center"
+                               Text="Play Music" />
+                    <materialDesign:PackIcon Kind="MusicNote" />
+                </StackPanel>
+            </Button>
+
+            <Button Click="NextMusicClick">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="SkipNextCircleOutline" />
+                </StackPanel>
+            </Button>
+
+        </Controls:WindowCommands>
+    </Controls:MetroWindow.RightWindowCommands>
+
 
     <Grid
         x:Name="AppGrid"
         >
-
         <Controls:MetroAnimatedSingleRowTabControl>
 
             <!-- Street Tab -->
             <Controls:MetroTabItem Header="Street">
-                <Grid Background="GhostWhite">
+                <Grid 
+                     >
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -120,27 +174,52 @@
                         <RowDefinition Height="*"/>
 
                     </Grid.RowDefinitions>
+                    <Grid.Background>
+                        <LinearGradientBrush 
+                            StartPoint="0,0"
+                            EndPoint="0,1"               
+                            >
+                            <GradientStop Color="Gainsboro" Offset=".8"/>
+                            <GradientStop Color="GhostWhite" Offset=".3"/>
+                        </LinearGradientBrush>
+                    </Grid.Background>
+
 
                     <!--Canvas-->
                     <Canvas 
-                        x:Name="AppCanvas"
-                        Background="DarkSlateGray"
-                        Margin="15"
-                        Grid.Row="1"
-                            >
+                            x:Name="AppCanvas"
+                            Margin="15"
+                            Grid.Row="1"
+                        >
+                        <Canvas.Background>
+                            <RadialGradientBrush>
+                                <GradientStop Color="DarkSlateGray" Offset="2.2"/>
+                                <GradientStop Color="DarkCyan" Offset=".001"/>
+                            </RadialGradientBrush>
+                        </Canvas.Background>
+
                     </Canvas>
 
-                    <!--RightPanel-->
-                    <!--<StackPanel
-                        Grid.Column="1"
-                        Grid.Row="1"
-                        >
-                        <Button x:Name ="Dummy" Click="DummyClick">
-                            woops
-                        </Button>
-                    </StackPanel>-->
+                    <materialDesign:Card
 
-                    <!-- Top Panel -->
+                        Foreground="{DynamicResource PrimaryHueLightForegroundBrush}"
+                        Width="200"
+                        Padding="8"
+                        Margin="20"
+                        Grid.Row="1"
+                        HorizontalAlignment="Right"
+                        Opacity=".5"
+                        >
+                        <TextBlock
+                            x:Name="TimeElapsed"
+                            FontSize="16"
+                            HorizontalAlignment="Center"
+                            >
+                            Time Elapsed
+                        </TextBlock>
+                    </materialDesign:Card>
+
+
                     <StackPanel
                         Orientation="Horizontal"
                         >
@@ -149,6 +228,7 @@
                             Content="Start Adding Locations" 
                             Click="LocationButtonClick"
                             Width="175"
+                            Margin="5"
                             >
 
 
@@ -157,6 +237,7 @@
                             x:Name="RoadButton"
                             Content="Start Adding Roads"
                             Width="175" Click="RoadButtonClick"
+                            Margin="5"
                             />
                         <!-- Time Button -->
                         <Button
@@ -169,25 +250,38 @@
 
                     </StackPanel>
 
-                    
-                    
+
+
 
                 </Grid>
             </Controls:MetroTabItem>
 
             <!-- Cars Tab -->
             <Controls:MetroTabItem Header="Cars">
-                <Grid Background="AntiqueWhite">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
+                    <Grid.Background>
+                        <LinearGradientBrush 
+                            StartPoint="0,0"
+                            EndPoint="0,1"               
+                        >
+                            <GradientStop Color="Gainsboro" Offset=".8"/>
+                            <GradientStop Color="GhostWhite" Offset=".3"/>
+                        </LinearGradientBrush>
+                    </Grid.Background>
 
                     <StackPanel
                         Orientation="Horizontal"
                         >
-                        <Button Click="AddCarClick">Add Car</Button>
-                        <Button Click="RemoveCarClick">Remove Car</Button>
+                        <Button Click="AddCarClick"
+                                Margin="5"
+                                >Add Car</Button>
+                        <Button Click="RemoveCarClick"
+                                Margin="5"
+                                >Remove Car</Button>
                     </StackPanel>
 
                     <ListView
@@ -201,10 +295,10 @@
                                     Header="Name" />
                                 <GridViewColumn
                                     DisplayMemberBinding="{Binding From.Data.Location.Data}"
-                                    Header="From Location" />
+                                    Header="From" />
                                 <GridViewColumn
                                     DisplayMemberBinding="{Binding To.Data.Location.Data}"
-                                    Header="To Locaton" />
+                                    Header="To" />
                                 <GridViewColumn
                                     DisplayMemberBinding="{Binding Speed}"
                                     Header="Speed" />
