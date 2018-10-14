@@ -75,6 +75,7 @@ namespace FinalProjectApp.Views
         private MediaPlayer mediaPlayer = new MediaPlayer();
         private bool isPlaying = false;
         private Random random = new Random();
+        private SnackbarMessageQueue fms;
 
 
         #endregion
@@ -90,8 +91,14 @@ namespace FinalProjectApp.Views
             EnableDrag();
             SetClockTimer();
             PrepareMusic();
+            PrepareSnackBar();
         }
 
+        private void PrepareSnackBar()
+        {
+            fms = new SnackbarMessageQueue();
+            AppSnackBar.MessageQueue = fms;
+        }
 
 
         #region Constructor Operations
@@ -260,22 +267,24 @@ namespace FinalProjectApp.Views
             {
                 CurrPoint = Mouse.GetPosition(AppCanvas);
                 var x = VisualTreeHelper.HitTest(AppCanvas, CurrPoint);
-                SelectedObject = x.VisualHit as Shape;
+                SelectedObject = x.VisualHit as Ellipse;
                 if (SelectedObject == null) return;
 
+                
                 int index = AppCanvas.Children.IndexOf(SelectedObject);
                 FromRoad = AppGraph.Vertices[index];
-
+                DisplayToSnackBar($"{FromRoad.Data.Location.Data} was Selected");
             }
             else if (ToRoad == null)
             {
                 CurrPoint = Mouse.GetPosition(AppCanvas);
                 var x = VisualTreeHelper.HitTest(AppCanvas, CurrPoint);
-                SelectedObject = x.VisualHit as Shape;
+                SelectedObject = x.VisualHit as Ellipse;
                 if (SelectedObject == null) return;
 
                 int index = AppCanvas.Children.IndexOf(SelectedObject);
                 ToRoad = AppGraph.Vertices[index];
+                DisplayToSnackBar($"{ToRoad.Data.Location.Data} was Selected");
 
 
                 //Case: Same Vertex
@@ -366,6 +375,7 @@ namespace FinalProjectApp.Views
 
             //Creates Temporary Vehicle
             var tmpVehicle = new Vehicle(carName, carFromVertex, carToVertex, carSpeed, newRectangle);
+            //Evaluates Vehicle Route
             tmpVehicle.Route = AppGraph.CalculateShortestRoutes(tmpVehicle.From.ID);
             tmpVehicle.TotalDistance = tmpVehicle.Route.GetDisplacementOfVertex(tmpVehicle.To);
             tmpVehicle.SetTravelRoute();
@@ -374,7 +384,12 @@ namespace FinalProjectApp.Views
                 DisplayToSnackBar("Car Not Added! Destination Unreachable");
                 return;
             }
-            tmpVehicle.CurrLocation = FromRoad;
+//            //Presets Vehicle Set up to avoid Random Null Cases
+//            tmpVehicle.CurrLocation = tmpVehicle.From;
+//            tmpVehicle.CurrDestination = tmpVehicle.TravelRoute.Pop();
+//            tmpVehicle.X = tmpVehicle.From.Data.X;
+//            tmpVehicle.Y = tmpVehicle.From.Data.Y;
+
 
             VehicleList.Add(tmpVehicle);
             CarListView.ItemsSource = VehicleCollection;
@@ -513,9 +528,6 @@ namespace FinalProjectApp.Views
                     if (!vehicle.IsActive) continue;
                     var tmpVehicleElement = vehicle.Element;
 
-                    Canvas.SetTop(tmpVehicleElement, vehicle.Y-15);
-                    Canvas.SetLeft(tmpVehicleElement, vehicle.X-30);
-
                     //Sets car element angle
                     var deltaY = vehicle.CurrDestination.Data.Y - vehicle.CurrLocation.Data.Y;
                     var deltaX = vehicle.CurrDestination.Data.X - vehicle.CurrLocation.Data.X;
@@ -534,6 +546,8 @@ namespace FinalProjectApp.Views
                     vehicle.X = vehicle.CurrLocation.Data.X + (percentage) * deltaX;
                     vehicle.Y = vehicle.CurrLocation.Data.Y + (percentage) * deltaY;
 
+                    Canvas.SetTop(tmpVehicleElement, vehicle.Y - 15);
+                    Canvas.SetLeft(tmpVehicleElement, vehicle.X - 30);
 
                     //Car Chip
                     Chip newChip = new Chip();
@@ -559,6 +573,7 @@ namespace FinalProjectApp.Views
                     if (vehicle.IsActive == false) continue;
                     if (vehicle.CurrLocation == null) vehicle.CurrLocation = vehicle.From;
 
+
                     //Initializer for next travel
                     if (vehicle.CurrDestination == null)
                     {
@@ -577,17 +592,20 @@ namespace FinalProjectApp.Views
                     if (vehicle.LocalProgress >= vehicle.LocalDistance)
                     {
                         vehicle.CurrLocation = vehicle.CurrDestination;
-                        vehicle.CurrDestination = null;
-                        vehicle.TotalProgress += vehicle.LocalProgress;
-                        vehicle.LocalProgress = 0;
 
                         //Vehicle has reached final destination
-
-                        if (vehicle.TravelRoute.Count == 0)
+                        if (vehicle.CurrLocation == vehicle.To)
                         {
                             vehicle.IsActive = false;
                             DisplayToSnackBar($"{vehicle.Name} has Finished! Travelling");
+                            continue;
                         }
+                        vehicle.CurrDestination = vehicle.TravelRoute.Pop();
+                        vehicle.TotalProgress += vehicle.LocalProgress;
+                        vehicle.LocalProgress = 0;
+
+
+
                     }
                 }
             });
@@ -609,13 +627,11 @@ namespace FinalProjectApp.Views
                 vehicle.IsActive = true;
             }
         }
-        private void DisplayToSnackBar(string input)
+        private async void DisplayToSnackBar(string input)
         {
             this.Dispatcher.Invoke(() =>
             {
-                AppSnackBar.MessageQueue = new SnackbarMessageQueue();
-                var fms = AppSnackBar.MessageQueue;
-                Task.Factory.StartNew(() => fms.Enqueue(input));
+                fms.Enqueue(input);
             });
 
         }
