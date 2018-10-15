@@ -79,8 +79,8 @@ namespace FinalProjectApp.Views
 
 
         #endregion
-        
-        
+
+
 
         public MainView()
         {
@@ -135,14 +135,15 @@ namespace FinalProjectApp.Views
             {
                 if (SelectedObject == null) return;
                 CurrPoint = Mouse.GetPosition(AppCanvas);
-//                Canvas.SetTop(SelectedObject, CurrPoint.Y - 70);
-//                Canvas.SetLeft(SelectedObject, CurrPoint.X - 70);
+                //                Canvas.SetTop(SelectedObject, CurrPoint.Y - 70);
+                //                Canvas.SetLeft(SelectedObject, CurrPoint.X - 70);
 
                 int index = AppCanvas.Children.IndexOf(SelectedObject);
                 AppGraph.Vertices[index].Data.X = CurrPoint.X;
                 AppGraph.Vertices[index].Data.Y = CurrPoint.Y;
 
                 Renderer();
+                RenderCars();
             });
         }
         private void EndDrag(object sender, MouseButtonEventArgs e)
@@ -215,8 +216,8 @@ namespace FinalProjectApp.Views
             //newEllipse.Fill = new ImageBrush(new BitmapImage(
             //    new Uri(@"Marker.png", UriKind.Relative)));
 
-//            Canvas.SetTop(newEllipse, p.Y - 30);
-//            Canvas.SetLeft(newEllipse, p.X - 50);
+            //            Canvas.SetTop(newEllipse, p.Y - 30);
+            //            Canvas.SetLeft(newEllipse, p.X - 50);
 
             AppCanvas.Children.Add(newEllipse);
 
@@ -270,7 +271,7 @@ namespace FinalProjectApp.Views
                 SelectedObject = x.VisualHit as Ellipse;
                 if (SelectedObject == null) return;
 
-                
+
                 int index = AppCanvas.Children.IndexOf(SelectedObject);
                 FromRoad = AppGraph.Vertices[index];
                 DisplayToSnackBar($"{FromRoad.Data.Location.Data} was Selected");
@@ -348,7 +349,7 @@ namespace FinalProjectApp.Views
         private void CreateCarButtonClick(object sender, RoutedEventArgs e)
         {
             if (!String.IsNullOrWhiteSpace(AddCarName.Text) &&
-                !String.IsNullOrWhiteSpace(CarDesignComboBox.Text)&&
+                !String.IsNullOrWhiteSpace(CarDesignComboBox.Text) &&
                 !String.IsNullOrWhiteSpace(AddCarFrom.Text) &&
                 !String.IsNullOrWhiteSpace(AddCarTo.Text) &&
                 !String.IsNullOrWhiteSpace(AddCarSpeed.Text) &&
@@ -384,11 +385,20 @@ namespace FinalProjectApp.Views
                 DisplayToSnackBar("Car Not Added! Destination Unreachable");
                 return;
             }
-//            //Presets Vehicle Set up to avoid Random Null Cases
-//            tmpVehicle.CurrLocation = tmpVehicle.From;
-//            tmpVehicle.CurrDestination = tmpVehicle.TravelRoute.Pop();
-//            tmpVehicle.X = tmpVehicle.From.Data.X;
-//            tmpVehicle.Y = tmpVehicle.From.Data.Y;
+
+            //Car Chip
+            Chip newChip = new Chip();
+            var tmpChipName = tmpVehicle.Name;
+            newChip.Content = tmpChipName;
+            newChip.Foreground = Brushes.AliceBlue;
+            newChip.RenderTransformOrigin = new Point(0.5, 0.5);
+            tmpVehicle.Chip = newChip;
+
+            //            //Presets Vehicle Set up to avoid Random Null Cases
+            //            tmpVehicle.CurrLocation = tmpVehicle.From;
+            //            tmpVehicle.CurrDestination = tmpVehicle.TravelRoute.Pop();
+            //            tmpVehicle.X = tmpVehicle.From.Data.X;
+            //            tmpVehicle.Y = tmpVehicle.From.Data.Y;
 
 
             VehicleList.Add(tmpVehicle);
@@ -418,7 +428,7 @@ namespace FinalProjectApp.Views
             {
                 StartButton.Content = "Stop Simulation";
                 isSimulating = true;
-//                ActivateAllVehicles();
+                //                ActivateAllVehicles();
                 ClockTimer.Start();
             }
             //            Stop
@@ -436,7 +446,7 @@ namespace FinalProjectApp.Views
         {
             TimerDisplay();
             ComputeActiveCars();
-            Renderer();
+            RenderCars();
         }
         #endregion
 
@@ -445,7 +455,7 @@ namespace FinalProjectApp.Views
         {
             this.Dispatcher.Invoke(() =>
             {
-                AppCanvas.Children.Clear();
+               AppCanvas.Children.Clear();
                 //Draw Vertices
                 foreach (Vertex<LocationVertexPair> appGraphVertex in AppGraph.Vertices)
                 {
@@ -453,7 +463,13 @@ namespace FinalProjectApp.Views
                     var tmpElement = appGraphVertex.Data.Element;
                     Canvas.SetTop(tmpElement, appGraphVertex.Data.Y - 30);
                     Canvas.SetLeft(tmpElement, appGraphVertex.Data.X - 30);
-                    AppCanvas.Children.Add(tmpElement);
+//                   AppCanvas.Children.Add(tmpElement);
+
+                    int elementIndex = AppCanvas.Children.IndexOf(tmpElement);
+                    if (elementIndex == -1)
+                        AppCanvas.Children.Add(tmpElement);
+                    else
+                        AppCanvas.Children[elementIndex] = tmpElement;
                 }
 
                 //Draw Location Chips
@@ -468,7 +484,13 @@ namespace FinalProjectApp.Views
 
                     Canvas.SetTop(newChip, appGraphVertex.Data.Y + 20);
                     Canvas.SetLeft(newChip, appGraphVertex.Data.X - 25);
-                    AppCanvas.Children.Add(newChip);
+                    //                    AppCanvas.Children.Add(newChip);
+
+                    int chipIndex = AppCanvas.Children.IndexOf(newChip);
+                    if (chipIndex == -1)
+                        AppCanvas.Children.Add(newChip);
+                    else
+                        AppCanvas.Children[chipIndex] = newChip;
                 }
 
                 //Draw Line
@@ -489,7 +511,13 @@ namespace FinalProjectApp.Views
                         newLine.StrokeEndLineCap = PenLineCap.Round;
                         newLine.StrokeStartLineCap = PenLineCap.Round;
 
-                        AppCanvas.Children.Add(newLine);
+                        //                        AppCanvas.Children.Add(newLine);
+                        int lineIndex = AppCanvas.Children.IndexOf(newLine);
+                        if (lineIndex == -1)
+                            AppCanvas.Children.Add(newLine);
+                        else
+                            AppCanvas.Children[lineIndex] = newLine;
+
 
                         //RoadLength Chip
                         Chip newChip = new Chip();
@@ -500,9 +528,15 @@ namespace FinalProjectApp.Views
                         var deltaY = appGraphVertex.Data.Y - neighbor.Vertex.Data.Y;
                         var deltaX = appGraphVertex.Data.X - neighbor.Vertex.Data.X;
 
-                        Canvas.SetTop(newChip, neighbor.Vertex.Data.Y + (0.5* deltaY) -40);
-                        Canvas.SetLeft(newChip, neighbor.Vertex.Data.X + (0.5* deltaX) -40);
-                        AppCanvas.Children.Add(newChip);
+                        Canvas.SetTop(newChip, neighbor.Vertex.Data.Y + (0.5 * deltaY) - 40);
+                        Canvas.SetLeft(newChip, neighbor.Vertex.Data.X + (0.5 * deltaX) - 40);
+
+                        //                        AppCanvas.Children.Add(newChip);
+                        int chipIndex = AppCanvas.Children.IndexOf(newChip);
+                        if (chipIndex == -1)
+                            AppCanvas.Children.Add(newChip);
+                        else
+                            AppCanvas.Children[chipIndex] = newChip;
 
 
                         //DashLine
@@ -517,16 +551,75 @@ namespace FinalProjectApp.Views
                         newLine.StrokeThickness = 5;
                         newLine.StrokeDashArray = doubleCollection;
 
-                        AppCanvas.Children.Add(newLine);
-
+                        //                        AppCanvas.Children.Add(newLine);
+                        int dashlineIndex = AppCanvas.Children.IndexOf(newLine);
+                        if (dashlineIndex == -1)
+                            AppCanvas.Children.Add(newLine);
+                        else
+                            AppCanvas.Children[dashlineIndex] = newLine;
                     }
                 }
 
-                //Draw Cars
+
+            });
+        }
+        private void ComputeActiveCars()
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                foreach (Vehicle vehicle in VehicleList)
+                {
+                    if (vehicle.IsActive == false) continue;
+                    if (vehicle.CurrLocation == null) vehicle.CurrLocation = vehicle.From;
+
+
+                    //Initializer for next travel
+                    if (vehicle.CurrDestination == null)
+                    {
+                        vehicle.CurrDestination = vehicle.TravelRoute.Pop();
+                        //Sets Distance
+                        foreach (Neighbor<LocationVertexPair> currLocationNeighbor in vehicle.CurrLocation.Neighbors)
+                        {
+                            if (currLocationNeighbor.GetVertex() == vehicle.CurrDestination)
+                                vehicle.LocalDistance = currLocationNeighbor.Weight;
+                                break;
+                            }
+                            
+                        }
+
+                    }
+
+                    //Check if vehicle  has reached destination
+                    if (vehicle.LocalProgress > vehicle.LocalDistance)
+                    {
+                        vehicle.CurrLocation = vehicle.CurrDestination;
+
+                        //Vehicle has reached final destination
+                        if (vehicle.CurrLocation == vehicle.To)
+                        {
+                            vehicle.IsActive = false;
+                            DisplayToSnackBar($"{vehicle.Name} has Finished! Travelling");
+                            continue;
+                        }
+                        vehicle.CurrDestination = vehicle.TravelRoute.Pop();
+                        vehicle.TotalProgress += vehicle.LocalProgress;
+                        vehicle.LocalProgress = 0;
+                    }
+                }
+            });
+        }
+
+        //Draw Cars
+        private void RenderCars()
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+
                 foreach (Vehicle vehicle in VehicleList)
                 {
                     if (!vehicle.IsActive) continue;
                     var tmpVehicleElement = vehicle.Element;
+                    var tmpVehicleChip = vehicle.Chip;
 
                     //Sets car element angle
                     var deltaY = vehicle.CurrDestination.Data.Y - vehicle.CurrLocation.Data.Y;
@@ -549,67 +642,28 @@ namespace FinalProjectApp.Views
                     Canvas.SetTop(tmpVehicleElement, vehicle.Y - 15);
                     Canvas.SetLeft(tmpVehicleElement, vehicle.X - 30);
 
-                    //Car Chip
-                    Chip newChip = new Chip();
-                    var tmpChipName = vehicle.Name;
-                    newChip.Content = tmpChipName;
-                    newChip.Foreground = Brushes.AliceBlue;
-                    newChip.RenderTransformOrigin = new Point(0.5, 0.5);
+                    Canvas.SetTop(tmpVehicleChip, vehicle.Y + 20);
+                    Canvas.SetLeft(tmpVehicleChip, vehicle.X - 25);
 
-                    Canvas.SetTop(newChip, vehicle.Y + 20);
-                    Canvas.SetLeft(newChip, vehicle.X - 25);
 
-                    AppCanvas.Children.Add(newChip);
-                    AppCanvas.Children.Add(tmpVehicleElement);
+                    
+                    int chipIndex = AppCanvas.Children.IndexOf(tmpVehicleChip);
+                    if (chipIndex == -1)
+                        AppCanvas.Children.Add(tmpVehicleChip);
+                    else
+                        AppCanvas.Children[chipIndex] = tmpVehicleChip;
+
+                    int vehicleIndex = AppCanvas.Children.IndexOf(tmpVehicleElement);
+                    if (vehicleIndex == -1)
+                        AppCanvas.Children.Add(tmpVehicleElement);
+                    else
+                        AppCanvas.Children[vehicleIndex] = tmpVehicleElement;
+
+
                 }
             });
         }
-        private void ComputeActiveCars()
-        {
-            this.Dispatcher.Invoke(() =>
-            {
-                foreach (Vehicle vehicle in VehicleList)
-                {
-                    if (vehicle.IsActive == false) continue;
-                    if (vehicle.CurrLocation == null) vehicle.CurrLocation = vehicle.From;
 
-
-                    //Initializer for next travel
-                    if (vehicle.CurrDestination == null)
-                    {
-                        vehicle.CurrDestination = vehicle.TravelRoute.Pop();
-                        //Sets Distance
-                        foreach (Neighbor<LocationVertexPair> currLocationNeighbor in vehicle.CurrLocation.Neighbors)
-                        {
-                            if (currLocationNeighbor.GetVertex() == vehicle.CurrDestination)
-                                vehicle.LocalDistance = currLocationNeighbor.Weight;
-                            break;
-                        }
-
-                    }
-
-                    //Check if vehicle  has reached destination
-                    if (vehicle.LocalProgress >= vehicle.LocalDistance)
-                    {
-                        vehicle.CurrLocation = vehicle.CurrDestination;
-
-                        //Vehicle has reached final destination
-                        if (vehicle.CurrLocation == vehicle.To)
-                        {
-                            vehicle.IsActive = false;
-                            DisplayToSnackBar($"{vehicle.Name} has Finished! Travelling");
-                            continue;
-                        }
-                        vehicle.CurrDestination = vehicle.TravelRoute.Pop();
-                        vehicle.TotalProgress += vehicle.LocalProgress;
-                        vehicle.LocalProgress = 0;
-
-
-
-                    }
-                }
-            });
-        }
         private void TimerDisplay()
         {
             this.Dispatcher.Invoke(() =>

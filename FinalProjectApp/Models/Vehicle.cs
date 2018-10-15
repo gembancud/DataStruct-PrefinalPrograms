@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Media.TextFormatting;
 using System.Windows.Shapes;
 using FinalProjectBase;
+using MaterialDesignThemes.Wpf;
 
 namespace FinalProjectApp.Models
 {
@@ -28,6 +29,7 @@ namespace FinalProjectApp.Models
         public double TotalProgress { get; set; }
         public Vertex<LocationVertexPair> CurrLocation { get; set; }
         public Vertex<LocationVertexPair> CurrDestination { get; set; }
+        public Chip Chip { get; set; }
 
 
         public Vehicle(string name, Vertex<LocationVertexPair> @from, Vertex<LocationVertexPair> to, double speed, Shape element)
