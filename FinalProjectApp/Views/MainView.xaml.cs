@@ -581,6 +581,7 @@ namespace FinalProjectApp.Views
                         foreach (Neighbor<LocationVertexPair> currLocationNeighbor in vehicle.CurrLocation.Neighbors)
                         {
                             if (currLocationNeighbor.GetVertex() == vehicle.CurrDestination)
+                            {
                                 vehicle.LocalDistance = currLocationNeighbor.Weight;
                                 break;
                             }
