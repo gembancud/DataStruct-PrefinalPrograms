@@ -572,6 +572,24 @@ namespace FinalProjectApp.Views
                     if (vehicle.IsActive == false) continue;
                     if (vehicle.CurrLocation == null) vehicle.CurrLocation = vehicle.From;
 
+                    //Check if vehicle  has reached destination
+                    if (vehicle.LocalProgress > vehicle.LocalDistance)
+                    {
+                        vehicle.CurrLocation = vehicle.CurrDestination;
+
+                        //Vehicle has reached final destination
+                        if (vehicle.CurrLocation == vehicle.To)
+                        {
+                            vehicle.IsActive = false;
+                            DisplayToSnackBar($"{vehicle.Name} has Finished! Travelling");
+                            continue;
+                        }
+
+                        vehicle.CurrDestination = null;
+                        vehicle.TotalProgress += vehicle.LocalProgress;
+                        vehicle.LocalProgress = 0;
+                    }
+
 
                     //Initializer for next travel
                     if (vehicle.CurrDestination == null)
@@ -590,22 +608,7 @@ namespace FinalProjectApp.Views
 
                     }
 
-                    //Check if vehicle  has reached destination
-                    if (vehicle.LocalProgress > vehicle.LocalDistance)
-                    {
-                        vehicle.CurrLocation = vehicle.CurrDestination;
 
-                        //Vehicle has reached final destination
-                        if (vehicle.CurrLocation == vehicle.To)
-                        {
-                            vehicle.IsActive = false;
-                            DisplayToSnackBar($"{vehicle.Name} has Finished! Travelling");
-                            continue;
-                        }
-                        vehicle.CurrDestination = vehicle.TravelRoute.Pop();
-                        vehicle.TotalProgress += vehicle.LocalProgress;
-                        vehicle.LocalProgress = 0;
-                    }
                 }
             });
         }
