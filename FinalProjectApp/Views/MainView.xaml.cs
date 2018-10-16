@@ -143,12 +143,13 @@ namespace FinalProjectApp.Views
                 AppGraph.Vertices[index].Data.Y = CurrPoint.Y;
 
                 Renderer();
-                RenderCars();
+//                RenderCars();
             });
         }
         private void EndDrag(object sender, MouseButtonEventArgs e)
         {
             dragTimer.Stop();
+            if(isSimulating== true) ClockTimer.Start();
             SelectedObject = null;
 
         }
@@ -159,6 +160,7 @@ namespace FinalProjectApp.Views
             SelectedObject = x.VisualHit as Ellipse;
             if (SelectedObject == null) return;
             dragTimer.Start();
+            ClockTimer.Stop();
         }
         #endregion
 
@@ -581,7 +583,7 @@ namespace FinalProjectApp.Views
                         if (vehicle.CurrLocation == vehicle.To)
                         {
                             vehicle.IsActive = false;
-                            DisplayToSnackBar($"{vehicle.Name} has Finished! Travelling");
+                            DisplayToSnackBar($"{vehicle.Name} has Finished! Travelling @ {TimeElapsed.Text}");
                             continue;
                         }
 
@@ -589,7 +591,6 @@ namespace FinalProjectApp.Views
                         vehicle.TotalProgress += vehicle.LocalProgress;
                         vehicle.LocalProgress = 0;
                     }
-
 
                     //Initializer for next travel
                     if (vehicle.CurrDestination == null)
@@ -667,7 +668,6 @@ namespace FinalProjectApp.Views
                 }
             });
         }
-
         private void TimerDisplay()
         {
             this.Dispatcher.Invoke(() =>
